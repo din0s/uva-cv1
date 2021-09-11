@@ -1,7 +1,6 @@
 import numpy as np
 
-def estimate_alb_nrm( image_stack, scriptV, shadow_trick=True):
-    
+def estimate_alb_nrm(image_stack, scriptV, shadow_trick=True):
     # COMPUTE_SURFACE_GRADIENT compute the gradient of the surface
     # INPUT:
     # image_stack : the images of the desired surface stacked up on the 3rd dimension
@@ -12,13 +11,13 @@ def estimate_alb_nrm( image_stack, scriptV, shadow_trick=True):
     # normal : the surface normal
 
     h, w, _ = image_stack.shape
-    
-    # create arrays for 
+
+    # create arrays for
     # albedo (1 channel)
     # normal (3 channels)
     albedo = np.zeros([h, w])
     normal = np.zeros([h, w, 3])
-    
+
     """
     ================
     Your code here
@@ -30,9 +29,28 @@ def estimate_alb_nrm( image_stack, scriptV, shadow_trick=True):
         albedo at this point is |g|
         normal at this point is g / |g|
     """
-    
+
+    for y in range(h):
+        for x in range(w):
+            i = image_stack[x, y, :]
+
+            if shadow_trick:
+                scriptI = np.diag(i)
+                a = scriptI @ scriptV
+                b = scriptI @ i
+            else:
+                a = scriptV
+                b = i
+
+            (g, *_) = np.linalg.lstsq(a, b, rcond = None)
+
+            albedo[x, y] = np.linalg.norm(g)
+
+            if albedo[x, y] > 0:
+                normal[x, y, :] = g / albedo[x, y]
+
     return albedo, normal
-    
+
 if __name__ == '__main__':
     n = 5
     image_stack = np.zeros([10,10,n])
