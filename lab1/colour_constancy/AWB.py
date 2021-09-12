@@ -4,6 +4,21 @@ from colourspace.getColourChannels import getColourChannels
 import matplotlib.pyplot as plt
 
 
+def Grey_World2(input_image):
+    R, G, B = getColourChannels(input_image)
+
+    new_image = np.zeros_like(input_image)
+    R_avg = np.mean(R)
+    G_avg = np.mean(G)
+    B_avg = np.mean(B)
+    Gray_world = (R_avg + G_avg + B_avg) / 3
+    normalize = np.vectorize(lambda x: 255 if x > 255 else int(x))
+    new_image[:, :, 0] = normalize((Gray_world / R_avg) * R)
+    new_image[:, :, 1] = normalize((Gray_world / G_avg) * G)
+    new_image[:, :, 2] = normalize((Gray_world / B_avg) * B)
+    return new_image
+
+
 def Grey_World(input_image):
     R, G, B = getColourChannels(input_image)
 
