@@ -37,7 +37,8 @@ def load_syn_images(image_dir='./SphereGray5/', channel=0):
     image_stack = np.double(image_stack)
     min_val = np.min(image_stack)
     max_val = np.max(image_stack)
-    image_stack = (image_stack - min_val) / (max_val - min_val)
+    if min_val != max_val:
+        image_stack = (image_stack - min_val) / (max_val - min_val)
     normV = np.tile(np.sqrt(np.sum(V ** 2, axis=1, keepdims=True)), (1, V.shape[1]))
     scriptV = V / normV
     
@@ -118,14 +119,14 @@ def show_results(albedo, normals, height_map, SE):
     # plotting the SE
     H = SE[::stride,::stride]
     fig = plt.figure()
-    ax = fig.gca(projection='3d')
+    ax = fig.add_subplot(projection='3d')
     ax.plot_surface(X,Y, H.T)
     plt.show()
     
     # plotting model geometry
     H = height_map[::stride,::stride]
     fig = plt.figure()
-    ax = fig.gca(projection='3d')
+    ax = fig.add_subplot(projection='3d')
     ax.plot_surface(X,Y, H.T)
     plt.show()
 
