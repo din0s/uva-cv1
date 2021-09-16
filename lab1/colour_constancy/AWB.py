@@ -19,7 +19,7 @@ def Grey_World2(input_image):
     return new_image
 
 
-def Grey_World(input_image):
+def Grey_World3(input_image):
     R, G, B = getColourChannels(input_image)
 
     new_image = np.zeros_like(input_image)
@@ -34,16 +34,33 @@ def Grey_World(input_image):
     return new_image
 
 
+def Grey_World(input_image):
+    input_image = input_image.astype(np.float32)
+    R, G, B = getColourChannels(input_image)
+
+    new_image = np.zeros_like(input_image)
+    R_avg = np.mean(R)
+    G_avg = np.mean(G)
+    B_avg = np.mean(B)
+
+    new_image[:, :, 0] = R / R_avg
+    new_image[:, :, 1] = G / G_avg
+    new_image[:, :, 2] = B / B_avg
+    new_image = cv2.normalize(new_image, new_image, 0., 1., cv2.NORM_MINMAX).astype(float)
+
+    return new_image
+
+
 def visualize(initial_image, grey_wolrd_image):
     fig, axs = plt.subplots(1, 2, figsize=(15, 15))
 
     axs[0].imshow(initial_image)
-    axs[0].set_title('Initial Image')
+    axs[0].set_title('Initial Image', fontsize=20)
 
     axs[1].imshow(grey_wolrd_image)
-    axs[1].set_title('Grey World Image')
+    axs[1].set_title('Grey World Image', fontsize=20)
 
-    fig.tight_layout()
+    #fig.tight_layout()
     plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
     plt.show()
 
@@ -53,7 +70,6 @@ if __name__ == '__main__':
 
     #convert from BGR to RGB
     image = image[:, :, ::-1]
-
     grey_world_image = Grey_World(image)
     visualize(image, grey_world_image)
 
