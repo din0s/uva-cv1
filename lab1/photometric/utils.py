@@ -9,30 +9,30 @@ def load_syn_images(image_dir='./SphereGray5/', channel=0):
     files = os.listdir(image_dir)
     #files = [os.path.join(image_dir, f) for f in files]
     nfiles = len(files)
-    
+
     image_stack = None
     V = 0
     Z = 0.5
-    
+
     for i in range(nfiles):
         # read input image
         im = cv2.imread(os.path.join(image_dir, files[i]))
         im = im[:,:,channel]
-        
+
         # stack at third dimension
         if image_stack is None:
             h, w = im.shape
             print('Image size (H*W): %d*%d' %(h,w) )
             image_stack = np.zeros([h, w, nfiles], dtype=int)
             V = np.zeros([nfiles, 3], dtype=np.float64)
-            
+
         image_stack[:,:,i] = im
-        
+
         # read light direction from image name
         X = np.double(files[i][(files[i].find('_')+1):files[i].rfind('_')])
         Y = np.double(files[i][files[i].rfind('_')+1:files[i].rfind('.png')])
         V[i, :] = [-X, Y, Z]
-        
+
     # normalization
     image_stack = np.double(image_stack)
     min_val = np.min(image_stack)
@@ -41,10 +41,10 @@ def load_syn_images(image_dir='./SphereGray5/', channel=0):
         image_stack = (image_stack - min_val) / (max_val - min_val)
     normV = np.tile(np.sqrt(np.sum(V ** 2, axis=1, keepdims=True)), (1, V.shape[1]))
     scriptV = V / normV
-    
+
     return image_stack, scriptV
-    
-    
+
+
 def load_face_images(image_dir='./yaleB02/'):
     num_images = 64
     filename = os.path.join(image_dir, 'yaleB02_P00_Ambient.pgm')
@@ -52,7 +52,7 @@ def load_face_images(image_dir='./yaleB02/'):
     h, w = ambient_image.shape
 
     # get list of all other image files
-    import glob 
+    import glob
     d = glob.glob(os.path.join(image_dir, 'yaleB02_P00A*.pgm'))
     import random
     d = random.sample(d, num_images)
@@ -76,14 +76,14 @@ def load_face_images(image_dir='./yaleB02/'):
     min_val = np.min(image_stack)
     max_val = np.max(image_stack)
     image_stack = (image_stack - min_val) / (max_val - min_val)
-    
+
     return image_stack, scriptV
-    
-    
+
+
 def show_results(albedo, normals, height_map, SE):
     # Stride in the plot, you may want to adjust it to different images
     stride = 1
-    
+
     # showing albedo map
     fig = plt.figure()
     albedo_max = albedo.max()
@@ -92,7 +92,7 @@ def show_results(albedo, normals, height_map, SE):
     print(albedo.shape)
     plt.imshow(albedo, cmap="gray")
     plt.show()
-    
+
     # showing normals as three separate channels
     figure = plt.figure()
     ax1 = figure.add_subplot(131)
@@ -102,27 +102,34 @@ def show_results(albedo, normals, height_map, SE):
     ax3 = figure.add_subplot(133)
     ax3.imshow(normals[..., 2])
     plt.show()
-    
+
     # meshgrid
     X, Y, _ = np.meshgrid(np.arange(0,np.shape(normals)[0], stride),
     np.arange(0,np.shape(normals)[1], stride),
     np.arange(1))
     X = X[..., 0]
     Y = Y[..., 0]
-    
-    '''
-    =============
-    You could further inspect the shape of the objects and normal directions by using plt.quiver() function.  
-    =============
-    '''
-    
+
+    # plotting shapes and normals via quiver
+    qstride = 8
+    Xs = X[::qstride, ::qstride]
+    Ys = Y[::qstride, ::qstride]
+    Hs = height_map[::qstride, ::qstride]
+    N1s = normals[::qstride, ::qstride, 0]
+    N2s = normals[::qstride, ::qstride, 1]
+    N3s = normals[::qstride, ::qstride, 2]
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    ax.quiver(Xs, Ys, Hs.T, N1s, N2s, N3s)
+    plt.show()
+
     # plotting the SE
     H = SE[::stride,::stride]
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     ax.plot_surface(X,Y, H.T)
     plt.show()
-    
+
     # plotting model geometry
     H = height_map[::stride,::stride]
     fig = plt.figure()
