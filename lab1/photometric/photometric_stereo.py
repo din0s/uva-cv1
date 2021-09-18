@@ -31,6 +31,7 @@ def photometric_stereo(image_dir='./SphereGray5/', rgb=False):
         normals_rgb = []
         for channel in range(3):
             [_albedo, _normals] = estimate_alb_nrm(img_stack_rgb[channel], scriptV_rgb[channel])
+            _albedo = cv2.normalize(_albedo,  _albedo, 0.0, 1.0, cv2.NORM_MINMAX)
             albedo[:, :, 2 - channel] = _albedo
             normals_rgb.append(_normals)
         normals = np.mean(normals_rgb, axis=0)
