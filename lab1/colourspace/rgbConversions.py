@@ -43,8 +43,8 @@ def rgb2normedrgb(input_image):
     R, G, B = getColourChannels(input_image)
 
     normalizer = R + G + B
-    # if normalizer=0 then R=G=B=0 (at a given point).
-    # Therefore, setting these points of normalizer to 1 will not have an effect to the new image. (0/1 = 0)
+    # if R=G=B=0 then normalizer=0 (at a given point).
+    # Therefore, setting these points of normalizer to 1 will not have an effect to the new image as 0/1 = 0
     normalizer[normalizer == 0] = 1
 
     new_image[:, :, 0] = R / normalizer
