@@ -27,12 +27,12 @@ def photometric_stereo(image_dir='./SphereGray5/', rgb=False):
     # compute the surface gradient from the stack of imgs and light source mat
     print('Computing surface albedo and normal map...\n')
     if rgb:
-        albedo_rgb, normals_rgb = [], []
+        albedo = np.empty((h, w, 3))
+        normals_rgb = []
         for channel in range(3):
-            [albedo, normals] = estimate_alb_nrm(img_stack_rgb[channel], scriptV_rgb[channel])
-            albedo_rgb.append(albedo)
-            normals_rgb.append(normals)
-        albedo = np.mean(albedo_rgb, axis=0)
+            [_albedo, _normals] = estimate_alb_nrm(img_stack_rgb[channel], scriptV_rgb[channel])
+            albedo[:, :, 2 - channel] = _albedo
+            normals_rgb.append(_normals)
         normals = np.mean(normals_rgb, axis=0)
     else:
         [albedo, normals] = estimate_alb_nrm(image_stack, scriptV)
