@@ -83,7 +83,7 @@ def photometric_stereo_face(image_dir='./images/yaleB02/'):
     print('Integrability checking')
     p, q, SE = check_integrability(normals)
 
-    threshold = 0.00;
+    threshold = 0.005;
     print('Number of outliers: %d\n' % np.sum(SE > threshold))
     SE[SE <= threshold] = float('nan') # for good visualization
 
