@@ -10,7 +10,7 @@ from construct_surface import construct_surface
 
 print('Part 1: Photometric Stereo\n')
 
-def photometric_stereo(image_dir='./SphereGray5/', rgb=False):
+def photometric_stereo(image_dir='./images/SphereGray5/', rgb=False):
     # obtain many images in a fixed view under different illumination
     print('Loading images...\n')
     if rgb:
@@ -72,7 +72,7 @@ def photometric_stereo(image_dir='./SphereGray5/', rgb=False):
     show_results(albedo, normals, height_map, SE)
 
 ## Face
-def photometric_stereo_face(image_dir='./photometric/images/yaleB02/'):
+def photometric_stereo_face(image_dir='./images/yaleB02/'):
     [image_stack, scriptV] = load_face_images(image_dir)
     [h, w, n] = image_stack.shape
     print('Finish loading %d images.\n' % n)
