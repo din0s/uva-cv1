@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import os
-
 from numpy.linalg import norm
 from utils import *
 from estimate_alb_nrm import estimate_alb_nrm

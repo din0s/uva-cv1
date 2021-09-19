@@ -25,7 +25,7 @@ def visualize(initial_image, image_albedo, image_shading, recoloured_image):
 
 
     axs[3].imshow(recoloured_image)
-    axs[3].set_title('Recoloured Image')
+    axs[3].set_title('Recolored Image')
 
     fig.tight_layout()
     plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])

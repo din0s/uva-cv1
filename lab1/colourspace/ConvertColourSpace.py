@@ -60,4 +60,4 @@ if __name__ == '__main__':
     # Convert from BGR to RGB
     I = I[:, :, ::-1]
 
-    out_img = ConvertColourSpace(I, 'gray')
+    out_img = ConvertColourSpace(I, 'opponent')

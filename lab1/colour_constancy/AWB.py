@@ -1,5 +1,7 @@
 import numpy as np
 import cv2
+import sys
+sys.path.append("../")
 from colourspace.getColourChannels import getColourChannels
 import matplotlib.pyplot as plt
 
@@ -73,7 +75,7 @@ def visualize_all_algorithms(initial_image):
 
 
 if __name__ == '__main__':
-    image = cv2.imread("redlake.jpg")
+    image = cv2.imread("awb.jpg")
 
     #convert from BGR to RGB
     image = image[:, :, ::-1]
