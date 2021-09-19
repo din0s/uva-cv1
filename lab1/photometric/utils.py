@@ -120,7 +120,7 @@ def show_results(albedo, normals, height_map, SE):
     N3s = normals[::qstride, ::qstride, 2]
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
-    ax.quiver(Xs, Ys, Hs.T, N1s, N2s, N3s)
+    ax.quiver(Xs, Ys, Hs.T, N1s.T, N2s.T, N3s.T)
     plt.show()
 
     # plotting the SE
