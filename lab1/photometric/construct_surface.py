@@ -20,7 +20,8 @@ def __constr_col_major(p, q):
     height_map[:, 0] = np.cumsum(q[:, 0])
 
     for row in range(h):
-        height_map[row, 1:] = np.cumsum(p[row, 1:]) + np.repeat(q[row, 0], w - 1)
+        for col in range(1, w):
+            height_map[row, col] = height_map[row, col - 1] + p[row, col]
 
     return height_map
 
@@ -44,7 +45,8 @@ def __constr_row_major(p, q):
     height_map[0, :] = np.cumsum(p[0, :])
 
     for col in range(w):
-        height_map[1:, col] = np.cumsum(q[1:, col]) + np.repeat(q[0, col], h - 1)
+        for row in range(1, h):
+            height_map[row, col] = height_map[row - 1, col] + q[row, col]
 
     return height_map
 
