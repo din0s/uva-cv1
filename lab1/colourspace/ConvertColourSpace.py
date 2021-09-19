@@ -44,12 +44,12 @@ def ConvertColourSpace(input_image, colourspace):
     elif colourspace.lower() == 'gray':
         input_image = input_image.astype(np.float32)
         new_image = rgbConversions.rgb2grays(input_image)
-
     else:
         print('Error: Unknown colorspace type [%s]...' % colourspace)
         new_image = input_image
 
     visualize(new_image, cmap=colourspace)
+    visualize(new_image)
 
     return new_image
 
@@ -60,4 +60,4 @@ if __name__ == '__main__':
     # Convert from BGR to RGB
     I = I[:, :, ::-1]
 
-    out_img = ConvertColourSpace(I, 'opponent')
+    out_img = ConvertColourSpace(I, 'gray')

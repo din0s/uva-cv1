@@ -10,12 +10,44 @@ def visualize(input_image, cmap=None):
         visualize_ycbcr(input_image)
     elif cmap == 'rgb':
         visualize_rgb(input_image)
-    elif cmap == 'opponent':  # to be implemented!!
+    elif cmap == 'opponent':
         visualize_opponent(input_image)
     elif cmap == 'gray':
         visualize_gray(input_image)
     else:
-        print('Error: Unknown colorspace type [%s]...' % cmap)
+        visualize_independent_of_cmap(input_image)
+
+
+def visualize_independent_of_cmap(input_image):
+    channels = input_image.shape[-1]
+
+    if channels == 4:
+        visualize_gray(input_image)
+    else:
+        if np.count_nonzero(input_image < 0) > 0:
+            input_image[:, :, 0] = min_max_normalization(input_image[:, :, 0])*255
+            input_image[:, :, 1] = min_max_normalization(input_image[:, :, 1])*255
+            input_image[:, :, 2] = min_max_normalization(input_image[:, :, 2])*255
+            input_image = input_image.astype(int)
+        else:
+            input_image = cv2.normalize(input_image,  input_image, 0, 255, cv2.NORM_MINMAX).astype(int)
+        fig, axs = plt.subplots(1, 4, figsize=(20, 10))
+
+        axs[0].imshow(input_image)
+        axs[0].set_title('Image', fontsize=18)
+
+        axs[1].imshow(input_image[:, :, 0], cmap='gray', vmin=0, vmax=255)
+        axs[1].set_title('Channel 1', fontsize=18)
+
+        axs[2].imshow(input_image[:, :, 1], cmap='gray', vmin=0, vmax=255)
+        axs[2].set_title('Channel 2', fontsize=18)
+
+        axs[3].imshow(input_image[:, :, 2], cmap='gray', vmin=0, vmax=255)
+        axs[3].set_title('Channel 3', fontsize=18)
+
+        fig.tight_layout()
+        plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
+        plt.show()
 
 
 def visualize_hsv(input_image):
@@ -25,6 +57,7 @@ def visualize_hsv(input_image):
     fig, axs = plt.subplots(1, 4, figsize=(20, 10))
 
     axs[0].imshow(input_image)
+    axs[0].set_title('HSV', fontsize=18)
 
     # H, 1, 1
     h_image = np.ones_like(input_image)
@@ -32,7 +65,7 @@ def visualize_hsv(input_image):
     h_image[:, :, 1] = MAX_S
     h_image[:, :, 2] = MAX_V
     axs[1].imshow(hsv2rgb(h_image))
-    axs[1].set_title('Hue')
+    axs[1].set_title('Hue', fontsize=18)
 
     # 1, S, 1
     s_image = np.empty_like(input_image)
@@ -40,7 +73,7 @@ def visualize_hsv(input_image):
     s_image[:, :, 1] = input_image[:, :, 1]
     s_image[:, :, 2] = MAX_V
     axs[2].imshow(hsv2rgb(s_image))
-    axs[2].set_title('Saturation')
+    axs[2].set_title('Saturation', fontsize=18)
 
     # 1, 0, V
     v_image = np.empty_like(input_image)
@@ -48,7 +81,7 @@ def visualize_hsv(input_image):
     v_image[:, :, 1] = 0
     v_image[:, :, 2] = input_image[:, :, 2]
     axs[3].imshow(hsv2rgb(v_image))
-    axs[3].set_title('Value')
+    axs[3].set_title('Value', fontsize=18)
 
     fig.tight_layout()
     plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
@@ -59,28 +92,28 @@ def visualize_ycbcr(input_image):
     fig, axs = plt.subplots(1, 4, figsize=(20, 10))
 
     axs[0].imshow(input_image)
-    axs[0].set_title('Initial Image')
+    axs[0].set_title('YCbCr', fontsize=18)
 
     y_image = np.ones_like(input_image)
     y_image[:, :, 0] = input_image[:, :, 0]
     y_image[:, :, 1] = 128
     y_image[:, :, 2] = 128
     axs[1].imshow(ycrcb2rgb(y_image))
-    axs[1].set_title('Luma')
+    axs[1].set_title('Luma', fontsize=18)
 
     cb_image = np.empty_like(input_image)
     cb_image[:, :, 0] = 128
     cb_image[:, :, 1] = input_image[:, :, 1]
     cb_image[:, :, 2] = 128
     axs[2].imshow(ycrcb2rgb(cb_image))
-    axs[2].set_title('Blue Difference')
+    axs[2].set_title('Blue Difference', fontsize=18)
 
     cr_image = np.empty_like(input_image)
     cr_image[:, :, 0] = 128
     cr_image[:, :, 1] = 128
     cr_image[:, :, 2] = input_image[:, :, 2]
     axs[3].imshow(ycrcb2rgb(cr_image))
-    axs[3].set_title('Red Difference')
+    axs[3].set_title('Red Difference', fontsize=18)
 
     fig.tight_layout()
     plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
@@ -95,6 +128,7 @@ def visualize_opponent(input_image):
     normalized_input_image[:, :, 1] = min_max_normalization(normalized_input_image[:, :, 1])
     normalized_input_image[:, :, 2] = min_max_normalization(normalized_input_image[:, :, 2])
     axs[0].imshow(normalized_input_image)
+    axs[0].set_title('Opponent', fontsize=18)
 
     rg_image = np.ones_like(input_image)
     r, g, b = redgreen2rgb(input_image[:, :, 0])
@@ -103,7 +137,7 @@ def visualize_opponent(input_image):
     rg_image[:, :, 2] = b
 
     axs[1].imshow(rg_image)
-    axs[1].set_title('Red-Green')
+    axs[1].set_title('Red-Green', fontsize=18)
 
     yb_image = np.empty_like(input_image)
     r, g, b = yellowblue2rgb(input_image[:, :, 1])
@@ -112,14 +146,14 @@ def visualize_opponent(input_image):
     yb_image[:, :, 2] = b
 
     axs[2].imshow(yb_image)
-    axs[2].set_title('Yellow-Blue')
+    axs[2].set_title('Yellow-Blue', fontsize=18)
 
     l_image = np.empty_like(input_image)
     l_image[:, :, 0] = min_max_normalization(input_image[:, :, 2])
     l_image[:, :, 1] = min_max_normalization(input_image[:, :, 2])
     l_image[:, :, 2] = min_max_normalization(input_image[:, :, 2])
     axs[3].imshow(l_image)
-    axs[3].set_title('Luminance')
+    axs[3].set_title('Luminance', fontsize=18)
 
     fig.tight_layout()
     plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
@@ -130,16 +164,16 @@ def visualize_rgb(input_image):
     fig, axs = plt.subplots(1, 4, figsize=(20, 10))
 
     axs[0].imshow(input_image)
-    axs[0].set_title('Normalized Image')
+    axs[0].set_title('Normalized RGB', fontsize=18)
 
     axs[1].imshow(input_image[:, :, 0], cmap='Reds')
-    axs[1].set_title('Reds')
+    axs[1].set_title('Red', fontsize=18)
 
     axs[2].imshow(input_image[:, :, 1], cmap='Greens')
-    axs[2].set_title('Greens')
+    axs[2].set_title('Green', fontsize=18)
 
     axs[3].imshow(input_image[:, :, 2], cmap='Blues')
-    axs[3].set_title('Blues')
+    axs[3].set_title('Blue', fontsize=18)
 
     fig.tight_layout()
     plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
@@ -150,16 +184,16 @@ def visualize_gray(input_image):
     fig, axs = plt.subplots(1, 4, figsize=(20, 10))
 
     axs[0].imshow(input_image[:, :, 0], cmap='gray', vmin=0, vmax=255)
-    axs[0].set_title('Ligtness Method')
+    axs[0].set_title('Lightness Method', fontsize=18)
 
     axs[1].imshow(input_image[:, :, 1], cmap='gray', vmin=0, vmax=255)
-    axs[1].set_title('Average Method')
+    axs[1].set_title('Average Method', fontsize=18)
 
     axs[2].imshow(input_image[:, :, 2], cmap='gray', vmin=0, vmax=255)
-    axs[2].set_title('Luminosity Method')
+    axs[2].set_title('Luminosity Method', fontsize=18)
 
     axs[3].imshow(input_image[:, :, 3], cmap='gray', vmin=0, vmax=255)
-    axs[3].set_title('Built-in Opencv Function')
+    axs[3].set_title('Built-in Opencv Function', fontsize=18)
 
     fig.tight_layout()
     plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
@@ -193,14 +227,12 @@ def redgreen2rgb(input_image):
     green = -1*red
     blue = 0.
 
-    # red[red < 0.] = 0.
-    # green[green < 0.] = 0.
-
-    red = red/255.
-    blue = blue/255.
+    red[red < 0.] = 0.
+    green[green < 0.] = 0.
 
     red = min_max_normalization(red)
     green = min_max_normalization(green)
+
     return red, green, blue
 
 
@@ -208,16 +240,11 @@ def yellowblue2rgb(input_image):
     yellow = input_image * (np.sqrt(6)/np.sqrt(2))
     blue = -1*yellow
 
-    yellow = yellow / 255.
-    blue = blue / 255.
+    yellow[yellow < 0.] = 0.
+    blue[blue < 0.] = 0.
 
     yellow = min_max_normalization(yellow)
     blue = min_max_normalization(blue)
-
-    # yellow[yellow < 0.] = 0.
-    # blue[blue < 0.] = 0.
-
-
 
     red = yellow
     green = yellow
