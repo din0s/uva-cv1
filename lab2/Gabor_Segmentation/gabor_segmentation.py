@@ -148,8 +148,8 @@ featureMaps = []
 for gaborFilter in gaborFilterBank:
     # gaborFilter["filterPairs"] has two elements. One is related to the real part 
     # of the Gabor Filter and the other one is the imagineray part.
-    real_out = cv2.filter2D(img, -1, gaborFilter["filterPairs"][..., 0])
-    imag_out = cv2.filter2D(img, -1, gaborFilter["filterPairs"][..., 1])
+    real_out = cv2.filter2D(img.astype(np.float32), -1, gaborFilter["filterPairs"][..., 0])
+    imag_out = cv2.filter2D(img.astype(np.float32), -1, gaborFilter["filterPairs"][..., 1])
     featureMaps.append(np.stack((real_out, imag_out), 2))
     
     # Visualize the filter responses if you wish.
@@ -204,7 +204,7 @@ for i, fm in enumerate(featureMaps):
 # \\ Hint: cv2 filter2D function is helpful here.   
 features = np.zeros(shape=(numRows, numCols, len(featureMags)))
 if smoothingFlag:
-    SIGMA, KERNEL_SIZE = 0.5, 7 # TODO(dinos): can we find optimal?
+    SIGMA, KERNEL_SIZE = 1.5, 5
     gKernel = gauss2D(SIGMA, SIGMA, KERNEL_SIZE)
     for i, fmag in enumerate(featureMags):
         features[:,:,i] = cv2.filter2D(fmag.astype(np.float32), -1, gKernel)
@@ -225,7 +225,7 @@ features = np.reshape(features, newshape=(numRows * numCols, -1))
 # Standardize features. 
 # \\ Hint: see http://ufldl.stanford.edu/wiki/index.php/Data_Preprocessing for more information.
 
-features = (255*(features - np.min(features))/np.ptp(features)).astype(int) # TODO(dinos): [0,255]?
+features = (features - np.min(features)) / np.ptp(features)
 
 # (Optional) Visualize the saliency map using the first principal component 
 # of the features matrix. It will be useful to diagnose possible problems 
@@ -250,8 +250,6 @@ km = KMeans(k, random_state=42).fit(features)
 pixLabels = km.labels_
 ctime = time.time() - tic
 print(f'Clustering completed in {ctime} seconds.')
-
-
 
 # Visualize the clustering by reshaping pixLabels into original grayscale
 # input size [numRows numCols].

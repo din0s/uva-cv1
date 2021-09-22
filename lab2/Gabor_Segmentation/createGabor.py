@@ -78,14 +78,14 @@ CREATEGABOR Creates a complex valued Gabor filter.
     # subplot(121), imshow(myGabor_real,[])
     # subplot(122), imshow(myGabor_imaginary, [])
 
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 2, 1)
-    ax.imshow(myGabor_real)    # Real
-    ax.axis("off")
-    ax = fig.add_subplot(1, 2, 2)
-    ax.imshow(myGabor_imaginary)    # Real
-    ax.axis("off")
-    plt.show()
+    # fig = plt.figure()
+    # ax = fig.add_subplot(1, 2, 1)
+    # ax.imshow(myGabor_real)    # Real
+    # ax.axis("off")
+    # ax = fig.add_subplot(1, 2, 2)
+    # ax.imshow(myGabor_imaginary)    # Real
+    # ax.axis("off")
+    # plt.show()
     return myGabor
 
 
