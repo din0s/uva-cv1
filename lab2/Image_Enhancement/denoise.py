@@ -16,7 +16,7 @@ def filtering_image(image, kernel, n_channels):
     return denoised_image
 
 
-def median_filtering(image, n_channels, kernel_size):  # TO BE VECTORIZED!
+def median_filtering(image, n_channels, kernel_size):
     pad_size = int(kernel_size/2)
     padded_image = np.pad(image, [(pad_size, pad_size), (pad_size, pad_size), (0, 0)], 'edge')
     denoised_image = np.zeros_like(image)
@@ -46,26 +46,3 @@ def denoise(image, kernel_type, **kwargs):
         print('Operation not implemented')
 
     return denoised_image
-
-
-# image = cv2.imread('images/image1_saltpepper.jpg')
-image = cv2.imread('images/kobi.png')
-image = image[:, :, ::-1] # for RGB
-image_shape = image.shape
-kwargs = {"kernel_size": 3, "sigma_x": 5, "sigma_y": 5}
-kwargs = {"ksize": 9}
-filtering_type = 'median'
-denoised_image = denoise(image, filtering_type, **kwargs)
-
-assert (denoised_image.shape == image_shape), "Different Shapes!"
-assert (~np.array_equal(denoised_image, image)), "Image not filtered!"
-assert (image_shape == image.shape), "Image shape changed!"
-
-fig, axs = plt.subplots(1, 2, figsize=(15, 15))
-axs[0].imshow(image)
-axs[0].set_title('Original Image')
-
-axs[1].imshow(denoised_image)
-axs[1].set_title('Denoised Image ('+filtering_type+')')
-
-plt.show()
