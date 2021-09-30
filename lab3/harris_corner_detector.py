@@ -37,6 +37,21 @@ def plot_rotation(imgs: list, lbls: list):
         plt.tight_layout()
         plt.show(block=(i == len(imgs) - 1))
 
+def plot_threshold(img: np.ndarray):
+    exp_start, exp_end = -7, -3
+    n = exp_end - exp_start + 1
+
+    _, ax = plt.subplots(1, n, figsize=(5*n, n))
+    for i, thresh in enumerate(np.logspace(exp_start, exp_end, num=n, base=10)):
+        _, r, c = detect_corners(img, threshold=thresh)
+        ax[i].imshow(img, cmap='gray')
+        ax[i].scatter(c,r, s=1, c='red')
+        ax[i].set_title(r"threshold = $10^{%d}$" % round(np.log10(thresh)))
+        ax[i].axis('off')
+    
+    plt.tight_layout()
+    plt.show()
+
 def plot_full(img: np.ndarray):
     Ix, Iy = image_derivatives(img)
     _, r, c = detect_corners(img)
@@ -66,5 +81,7 @@ if __name__ == "__main__":
         img45 = rotate(img, 45)
         img90 = rotate(img, 90)
         plot_rotation([img, img45, img90], [r"$%d\degree$" % i for i in (0, 45, 90)])
+    elif input("Play with threshold? [y/N] ") == 'y':
+        plot_threshold(img)
     else:
         plot_full(img)
