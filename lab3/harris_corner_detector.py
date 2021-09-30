@@ -26,7 +26,18 @@ def detect_corners(img: np.ndarray, window: int = 5, threshold: float = 0.7) -> 
 
     return H, r, c
 
-def plot_corners(img: np.ndarray):
+def plot_rotation(imgs: list, lbls: list):
+    for i, img in enumerate(imgs):
+        _, r, c = detect_corners(img)
+        plt.figure(figsize=(5, 5))
+        plt.imshow(img, cmap='gray')
+        plt.scatter(c,r, s=1, c='red')
+        plt.suptitle(lbls[i])
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show(block=(i == len(imgs) - 1))
+
+def plot_full(img: np.ndarray):
     Ix, Iy = image_derivatives(img)
     _, r, c = detect_corners(img)
 
@@ -54,7 +65,6 @@ if __name__ == "__main__":
     if input("Apply rotation? [y/N] ") == 'y':
         img45 = rotate(img, 45)
         img90 = rotate(img, 90)
-        plot_corners(img45)
-        plot_corners(img90)
+        plot_rotation([img, img45, img90], [r"$%d\degree$" % i for i in (0, 45, 90)])
     else:
-        plot_corners(img)
+        plot_full(img)
