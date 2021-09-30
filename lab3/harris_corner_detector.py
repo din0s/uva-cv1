@@ -4,7 +4,7 @@ from utils import image_derivatives, normal2chan
 import matplotlib.pyplot as plt
 import numpy as np
 
-def detect_corners(img: np.ndarray, window: int = 5, threshold: float = 0.7) -> tuple:
+def detect_corners(img: np.ndarray, window: int = 5, threshold: float = 1e-5) -> tuple:
     img = normal2chan(img)
     Ix, Iy = image_derivatives(img)
 
@@ -18,8 +18,8 @@ def detect_corners(img: np.ndarray, window: int = 5, threshold: float = 0.7) -> 
     r, c = [], []
     for x in range(window, h - window - 1):
         for y in range(window, w - window - 1):
-            p = img[x, y]
-            region = img[x-window:x+window, y-window:y+window]
+            p = H[x, y]
+            region = H[x-window:x+window, y-window:y+window]
             if p > threshold and region[region > p].size == 0:
                 r.append(x)
                 c.append(y)
