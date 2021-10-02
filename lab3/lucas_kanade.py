@@ -12,7 +12,7 @@ def get_centers(h: int, w: int, stride: int = 15) -> np.ndarray:
 def blockify(img: np.ndarray, centers: np.ndarray, stride: int = 15) -> np.ndarray:
     s = stride // 2                                             # integer division by 2 to get left/right window
     blocks = [img[r-s:r+s+1, c-s:c+s+1] for (r,c) in centers]   # select stride//2 pixels to the left/right
-    return np.array(blocks).reshape(len(centers), -1)           # reshape to get (#centers, 2)
+    return np.array(blocks).reshape(len(centers), stride**2)    # reshape to get (#centers, stride**2)
 
 def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None, stride: int = 15, blockPlot: bool = True):
     img1 = normal1chan(img1)            # make sure we have a normalized image with 1 channel
