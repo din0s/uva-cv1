@@ -1,21 +1,21 @@
 from scipy.ndimage import gaussian_filter, maximum_filter, rotate
-from utils import image_derivatives, normal2chan
+from utils import image_derivatives, normal1chan
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 def detect_corners(img: np.ndarray, window: int = 5, threshold: float = 1e-5) -> tuple:
-    img = normal2chan(img)
-    Ix, Iy = image_derivatives(img)
+    img = normal1chan(img) # make sure we have a normalized image with 1 channel
+    Ix, Iy = image_derivatives(img) # calculate image derivatives dx, dy
 
-    A = gaussian_filter(Ix ** 2, sigma=1)
-    B = gaussian_filter(Ix * Iy, sigma=1)
-    C = gaussian_filter(Iy ** 2, sigma=1)
+    A = gaussian_filter(Ix ** 2, sigma=1) # A = gauss(Ix ** 2)
+    B = gaussian_filter(Ix * Iy, sigma=1) # B = gauss(Ix * Iy)
+    C = gaussian_filter(Iy ** 2, sigma=1) # C = gauss(Iy ** 2)
     H = (A * C - B**2) - 0.04 * (A + C) ** 2
 
     H_max = maximum_filter(H, size=window, mode='reflect')
     H_max[H_max > H] = 0 # remove points that are not their neighborhood's max
-    r, c = np.where(H_max > threshold)
+    r, c = np.where(H_max > threshold) # retrieve rows and cols for points above threshold
 
     return H, r, c
 

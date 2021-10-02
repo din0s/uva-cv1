@@ -1,4 +1,4 @@
-from utils import image_derivatives, normal2chan
+from utils import image_derivatives, normal1chan
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +15,7 @@ def blockify(img: np.ndarray, centers: np.ndarray, stride: int = 15) -> np.ndarr
     return np.array(blocks).reshape(len(centers), -1)           # reshape to get (#centers, 2)
 
 def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None, stride: int = 15, blockPlot: bool = True):
-    img1 = normal2chan(img1)            # make sure we have a normalized image with 1 channel
+    img1 = normal1chan(img1)            # make sure we have a normalized image with 1 channel
     Ix, Iy = image_derivatives(img1)    # calculate image derivatives dx, dy
 
     h, w = img1.shape
@@ -32,7 +32,7 @@ def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None,
     Ry = blockify(Iy, centers, stride)
 
     As = np.dstack([Rx,Ry])                                             # A = [ Ix Iy ]
-    bs = blockify(img1 - normal2chan(img0), centers)                    # b = [ -It ]
+    bs = blockify(img1 - normal1chan(img0), centers)                    # b = [ -It ]
     vs = np.array([np.linalg.pinv(A) @ b for (A, b) in zip(As, bs)])    # v = pinv(A) @ b
 
     # display first image
