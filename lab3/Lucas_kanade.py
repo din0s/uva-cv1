@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import image_derivatives, conv2d
+from utils import image_derivatives
 
-def blockify(image: np.ndarray, stride: int):
+def blockify(image: np.ndarray, stride: int) -> np.ndarray:
     x, y = image.shape
     blocks = np.array([image[i:i + stride, j:j + stride] for j in range(0, y - y % stride, stride)
 			   for i in range(0, x - x % stride,stride)],)
