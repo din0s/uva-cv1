@@ -25,7 +25,8 @@ def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None,
     else:
         s = stride // 2
         # drop centers that are outside the valid stride window on either side
-        centers = centers[(s <= centers[:, 0]) & (s <= centers[:, 1]) & (centers[:, 0] < h-s) & (centers[:, 1] < w-s)]
+        inside = (s <= centers[:, 0]) & (s <= centers[:, 1]) & (centers[:, 0] < h-s) & (centers[:, 1] < w-s)
+        centers = centers[inside]
 
     # split the img derivatives into blocks
     Rx = blockify(Ix, centers, stride)
@@ -39,9 +40,12 @@ def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None,
     plt.imshow(img0)
 
     R, C = centers[:, 0], centers[:, 1]
-    vxs, vys = vs[:, 0], vs[:, 1]
+    # MAGIC_NUMBER = np.sqrt(np.linalg.norm(vs[:, 0]) ** 2 + np.linalg.norm(vs[:, 1]) ** 2)
+    MAGIC_NUMBER = 2.9
+    print(MAGIC_NUMBER)
+    vxs, vys = vs[:, 0] * MAGIC_NUMBER, vs[:, 1] * MAGIC_NUMBER
     # CAREFUL: cols correspond to vxs, rows correspond to vys
-    plt.quiver(C, R, vxs, vys, angles="xy", scale_units="xy", scale=0.1)
+    plt.quiver(C, R, vxs, vys, angles="xy", scale_units="xy", scale=0.1, cmap='Reds')
 
     plt.show(block=blockPlot)
 
@@ -52,9 +56,9 @@ def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None,
         plt.clf()
 
     # update the centers accordingly and return
-    C = C + np.around(vxs, decimals=1).astype(int)
-    R = R + np.around(vys, decimals=1).astype(int)
-    return R, C
+    # C = C + np.round(vxs * 2).astype(int)
+    # R = R + np.round(vys * 2).astype(int)
+    return R, C, vxs, vys, inside
 
 if __name__ == "__main__":
     img_src = None
