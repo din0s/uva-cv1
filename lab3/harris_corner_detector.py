@@ -1,4 +1,4 @@
-from scipy.ndimage import gaussian_filter, rotate
+from scipy.ndimage import gaussian_filter, maximum_filter, rotate
 from utils import image_derivatives, normal2chan
 
 import matplotlib.pyplot as plt
@@ -13,16 +13,9 @@ def detect_corners(img: np.ndarray, window: int = 5, threshold: float = 1e-5) ->
     C = gaussian_filter(Iy ** 2, sigma=1)
     H = (A * C - B**2) - 0.04 * (A + C) ** 2
 
-    window = 5
-    h, w = img.shape
-    r, c = [], []
-    for x in range(window, h - window - 1):
-        for y in range(window, w - window - 1):
-            p = H[x, y]
-            region = H[x-window:x+window, y-window:y+window]
-            if p > threshold and region[region > p].size == 0:
-                r.append(x)
-                c.append(y)
+    H_max = maximum_filter(H, size=window, mode='reflect')
+    H_max[H_max > H] = 0 # remove points that are not their neighborhood's max
+    r, c = np.where(H_max > threshold)
 
     return H, r, c
 
@@ -48,7 +41,7 @@ def plot_threshold(img: np.ndarray):
         ax[i].scatter(c,r, s=1, c='red')
         ax[i].set_title(r"threshold = $10^{%d}$" % round(np.log10(thresh)))
         ax[i].axis('off')
-    
+
     plt.tight_layout()
     plt.show()
 
@@ -74,9 +67,9 @@ if __name__ == "__main__":
             img_src = "./images/toy/0001.jpg"
         elif img_sel == '2':
             img_src = "./images/doll/0200.jpg"
-    
+
     img = plt.imread(img_src)
-    
+
     if input("Apply rotation? [y/N] ") == 'y':
         img45 = rotate(img, 45)
         img90 = rotate(img, 90)
