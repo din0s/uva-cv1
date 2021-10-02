@@ -11,15 +11,15 @@ def normal2chan(img: np.ndarray) -> np.ndarray:
     if dims == 3:
         # take the mean of all channels
         img = np.mean(img, axis=2)
-    
+
     if np.max(img) > 1:
         # normalize to [0,1]
         img = img / np.max(img)
-    
+
     return img
 
 def image_derivatives(img: np.ndarray) -> tuple:
-    Gx = np.array([-1, 1])[np.newaxis, :]
+    Gx = np.array([-1, 0, 1])[np.newaxis, :]
     Gy = Gx.T
 
     # make sure the image is normalized and has 2 channels
