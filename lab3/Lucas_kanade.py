@@ -31,6 +31,6 @@ def lucas_kanade(image1: np.ndarray, image2: np.ndarray) -> None:
     plt.show()
 
 if __name__ == '__main__':
-	image1 = plt.imread('/home/john/cv1_labs/lab3/images/sphere1.ppm')
-	image2 = plt.imread('/home/john/cv1_labs/lab3/images/sphere2.ppm')
+	image1 = plt.imread('images/Car1.jpg')
+	image2 = plt.imread('images/Car2.jpg')
 	lucas_kanade(image1, image2)
