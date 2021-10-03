@@ -1,9 +1,9 @@
-from utils import image_derivatives, normal1chan
+from utils import image_derivatives, normal1chan, conv2d
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-def get_centers(h: int, w: int, stride: int = 15) -> np.ndarray:
+def get_centers(h: int, w: int, stride: int = 15, return_plots: bool = False) -> np.ndarray:
     s = stride // 2                                     # integer division by 2 to get left/right window
     r = np.arange(s, h - s, step=stride)                # rows go from stride//2 to max_height - stride//2
     c = np.arange(s, w - s, step=stride)                # cols go from stride//2 to max_width - stride//2
@@ -14,7 +14,8 @@ def blockify(img: np.ndarray, centers: np.ndarray, stride: int = 15) -> np.ndarr
     blocks = [img[r-s:r+s+1, c-s:c+s+1] for (r,c) in centers]   # select stride//2 pixels to the left/right
     return np.array(blocks).reshape(len(centers), stride**2)    # reshape to get (#centers, stride**2)
 
-def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None, stride: int = 15, blockPlot: bool = True):
+def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None,
+                 stride: int = 15, blockPlot: bool = True, return_plots: bool = False):
     img1 = normal1chan(img1)            # make sure we have a normalized image with 1 channel
     Ix, Iy = image_derivatives(img1)    # calculate image derivatives dx, dy
 
@@ -35,19 +36,19 @@ def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None,
     As = np.dstack([Rx,Ry])                                             # A = [ Ix Iy ]
     bs = blockify(img1 - normal1chan(img0), centers)                    # b = [ -It ]
     vs = np.array([np.linalg.pinv(A) @ b for (A, b) in zip(As, bs)])    # v = pinv(A) @ b
-
+    fig = plt.figure()
     # display first image
+    plt.axis('off')
     plt.imshow(img0)
 
     R, C = centers[:, 0], centers[:, 1]
-    # MAGIC_NUMBER = np.sqrt(np.linalg.norm(vs[:, 0]) ** 2 + np.linalg.norm(vs[:, 1]) ** 2)
-    MAGIC_NUMBER = 2.9
+    MAGIC_NUMBER = np.linalg.norm(vs)
+    MAGIC_NUMBER = 2.7 * np.tanh(MAGIC_NUMBER)
     print(MAGIC_NUMBER)
     vxs, vys = vs[:, 0] * MAGIC_NUMBER, vs[:, 1] * MAGIC_NUMBER
     # CAREFUL: cols correspond to vxs, rows correspond to vys
     plt.quiver(C, R, vxs, vys, angles="xy", scale_units="xy", scale=0.1, cmap='Reds')
-
-    plt.show(block=blockPlot)
+    #plt.show(block=blockPlot)
 
     if not blockPlot:
         # we were asked to not block the plot display, which is done for the tracking feature
@@ -55,10 +56,14 @@ def optical_flow(img0: np.ndarray, img1: np.ndarray, centers: np.ndarray = None,
         plt.pause(1/24)
         plt.clf()
 
+    plt.close()
+    if return_plots:
+        return R, C, vxs, vys, inside, fig
+    else:
+        return R, C, vxs, vys, inside
     # update the centers accordingly and return
     # C = C + np.round(vxs * 2).astype(int)
     # R = R + np.round(vys * 2).astype(int)
-    return R, C, vxs, vys, inside
 
 if __name__ == "__main__":
     img_src = None

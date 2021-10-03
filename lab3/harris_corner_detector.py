@@ -47,7 +47,7 @@ def plot_threshold(img: np.ndarray):
 
 def plot_full(img: np.ndarray):
     Ix, Iy = image_derivatives(img)
-    _, r, c = detect_corners(img)
+    _, r, c = detect_corners(img, threshold=5e-4)
 
     _, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15,5))
     ax1.imshow(Ix) ; ax1.set_title(r"$\mathcal{I}_x$")
