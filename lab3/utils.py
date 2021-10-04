@@ -26,3 +26,7 @@ def image_derivatives(img: np.ndarray) -> tuple:
     img = normal1chan(img)
 
     return conv2d(img, Gx), conv2d(img, Gy)
+
+def mask_centers(centers: np.ndarray, h: int, w: int, stride: int) -> np.ndarray:
+    s = stride // 2
+    return (s <= centers[:, 0]) & (s <= centers[:, 1]) & (centers[:, 0] < h-s) & (centers[:, 1] < w-s)

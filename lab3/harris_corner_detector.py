@@ -1,3 +1,4 @@
+from matplotlib.gridspec import GridSpec
 from scipy.ndimage import gaussian_filter, maximum_filter, rotate
 from utils import image_derivatives, normal1chan
 
@@ -47,9 +48,13 @@ def plot_threshold(img: np.ndarray):
 
 def plot_full(img: np.ndarray):
     Ix, Iy = image_derivatives(img)
-    _, r, c = detect_corners(img, threshold=5e-4)
+    _, r, c = detect_corners(img)
 
-    _, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15,5))
+    fig = plt.figure(figsize=(15,5))
+    gs = GridSpec(2, 2, figure=fig)
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, :])
     ax1.imshow(Ix) ; ax1.set_title(r"$\mathcal{I}_x$")
     ax2.imshow(Iy) ; ax2.set_title(r"$\mathcal{I}_y$")
     ax3.imshow(img, cmap='gray') ; ax3.scatter(c,r, s=1, c='red') ; ax3.set_title("Detected corners")
