@@ -32,8 +32,7 @@ def track_flow(imgs: list, vid_name: str, harris_thresh: float = 1e-5, save_vid:
             # determine optical flow and retrieve new location of POI
             vxs, vys = optical_flow(imgs[0], imgs[1], corners, block_plot=False)
 
-        first_iter = vxs_rem is None
-        if first_iter:
+        if vxs_rem is None:
             vxs_rem = np.zeros_like(vxs)
             vys_rem = np.zeros_like(vys)
 
