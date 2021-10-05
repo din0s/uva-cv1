@@ -91,4 +91,4 @@ if __name__ == "__main__":
     vid_name = vid_dir[vid_dir.rfind("/")+1:]
     imgs = [plt.imread(f"{vid_dir}/{i}") for i in sorted(os.listdir(vid_dir))]
 
-    track_flow(imgs, vid_name, harris_thresh=1e-4, save_vid=True)
+    track_flow(imgs, vid_name, harris_thresh=1e-4, save_vid=False)
