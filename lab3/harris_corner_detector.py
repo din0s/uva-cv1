@@ -1,21 +1,22 @@
+from matplotlib.gridspec import GridSpec
 from scipy.ndimage import gaussian_filter, maximum_filter, rotate
-from utils import image_derivatives, normal2chan
+from utils import image_derivatives, normal1chan
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 def detect_corners(img: np.ndarray, window: int = 5, threshold: float = 1e-5) -> tuple:
-    img = normal2chan(img)
-    Ix, Iy = image_derivatives(img)
+    img = normal1chan(img) # make sure we have a normalized image with 1 channel
+    Ix, Iy = image_derivatives(img) # calculate image derivatives dx, dy
 
-    A = gaussian_filter(Ix ** 2, sigma=1)
-    B = gaussian_filter(Ix * Iy, sigma=1)
-    C = gaussian_filter(Iy ** 2, sigma=1)
+    A = gaussian_filter(Ix ** 2, sigma=1) # A = gauss(Ix ** 2)
+    B = gaussian_filter(Ix * Iy, sigma=1) # B = gauss(Ix * Iy)
+    C = gaussian_filter(Iy ** 2, sigma=1) # C = gauss(Iy ** 2)
     H = (A * C - B**2) - 0.04 * (A + C) ** 2
 
     H_max = maximum_filter(H, size=window, mode='reflect')
     H_max[H_max > H] = 0 # remove points that are not their neighborhood's max
-    r, c = np.where(H_max > threshold)
+    r, c = np.where(H_max > threshold) # retrieve rows and cols for points above threshold
 
     return H, r, c
 
@@ -49,7 +50,11 @@ def plot_full(img: np.ndarray):
     Ix, Iy = image_derivatives(img)
     _, r, c = detect_corners(img)
 
-    _, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15,5))
+    fig = plt.figure(figsize=(15,5))
+    gs = GridSpec(2, 2, figure=fig)
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, :])
     ax1.imshow(Ix) ; ax1.set_title(r"$\mathcal{I}_x$")
     ax2.imshow(Iy) ; ax2.set_title(r"$\mathcal{I}_y$")
     ax3.imshow(img, cmap='gray') ; ax3.scatter(c,r, s=1, c='red') ; ax3.set_title("Detected corners")
