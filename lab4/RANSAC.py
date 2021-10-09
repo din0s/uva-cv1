@@ -4,6 +4,7 @@ from utils import affine_wrap, create_affine_matrix, imread_gray, imshow
 import cv2
 import numpy as np
 
+
 def ransac(*imgs: np.ndarray, N: int = 50, P: int = 10, radius: float = 10.0, plot: bool = False) -> tuple:
     kps, valid = match_keypoints(*imgs)
 
@@ -25,8 +26,11 @@ def ransac(*imgs: np.ndarray, N: int = 50, P: int = 10, radius: float = 10.0, pl
             XY1.append([x1, y1, 1])
             XY2.append([x2, y2, 1])
 
-            A.append([[x1,y1,0,0,1,0], [0,0,x1,y1,0,1]])
+            A.append([[x1, y1, 0, 0, 1, 0], [0, 0, x1, y1, 0, 1]])
             b.append([[x2, y2]])
+
+        XY1 = np.array(XY1)
+        XY2 = np.array(XY2)
 
         A = np.array(A).reshape(-1, 6)
         b = np.array(b).flatten().T
@@ -35,10 +39,11 @@ def ransac(*imgs: np.ndarray, N: int = 50, P: int = 10, radius: float = 10.0, pl
         m = np.array([[x[0], x[1]], [x[2], x[3]]])
         t = np.array([[x[4], x[5]]]).T
 
-        XY2_aff = XY1 @ create_affine_matrix(m, t)
+        XY2_aff = create_affine_matrix(m, t) @ XY1.T
+        XY2_aff = XY2_aff.T
 
         err = np.abs(XY2 - XY2_aff)
-        err_bin = np.sqrt(err[0, :]**2 + err[1, :]**2) <= radius
+        err_bin = np.sqrt(err[:, 0]**2 + err[:, 1]**2) <= radius
         inline_count = err_bin.sum()
 
         if inline_count > most_inline:
