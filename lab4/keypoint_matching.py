@@ -4,6 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def detect_kps_descs(img: np.ndarray, plot: bool = False) -> tuple:
     sift = cv2.SIFT_create()
     kps, descs = sift.detectAndCompute(img, None)
@@ -15,6 +16,7 @@ def detect_kps_descs(img: np.ndarray, plot: bool = False) -> tuple:
         imshow(img)
 
     return kps, descs
+
 
 # default kp_thresh according to SIFT paper (https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf)
 def match_keypoints(*imgs: np.ndarray, kp_thresh: float = 0.7, plot: bool = False) -> tuple:
@@ -34,6 +36,7 @@ def match_keypoints(*imgs: np.ndarray, kp_thresh: float = 0.7, plot: bool = Fals
             valid.append(p1)
 
     return keypoints, np.array(valid)
+
 
 if __name__ == "__main__":
     img1 = imread_gray('boat1.pgm')

@@ -1,18 +1,20 @@
 from RANSAC import ransac
-from utils import affine_wrap, create_affine_matrix, imread_gray, imshow
+from utils import create_affine_matrix, imread_gray, imshow, stitching
 
-import cv2
 import numpy as np
 
+
 if __name__ == "__main__":
-    img2 = imread_gray('left.jpg')
-    img1 = imread_gray('right.jpg')
+    left_img = imread_gray('left.jpg')
+    right_img = imread_gray('right.jpg')
 
     np.random.seed(42)
-    m, t, most_in = ransac(img1, img2)
+    m, t, most_in = ransac(right_img, left_img)
     print(most_in)
     A = create_affine_matrix(m, t)
 
-    img2_aff = affine_wrap(img1, A)
+    stitch = stitching(left_img, right_img, A)
 
-    imshow(img1, img2_aff, img2)
+    imshow(left_img, right_img, stitch)
+
+
