@@ -51,3 +51,24 @@ def affine_wrap(img: np.ndarray, A: np.ndarray) -> np.ndarray:
             img_aff[y2, x2] = val
 
     return img_aff
+
+
+def stitching(left_img: np.ndarray, right_img: np.ndarray,  A: np.ndarray) -> np.ndarray:
+    h, w = left_img.shape
+    output = np.zeros([2*h + w, 2*w + h])  # Make sure that the 2 images will fit in output. We will later crop it.
+    output[:h, :w] = left_img
+
+    for (y1, x1), val in np.ndenumerate(right_img):
+        xy1 = np.array([x1, y1, 1]).T[:, np.newaxis]
+        xy2 = A @ xy1
+
+        xy2 = xy2.flatten()
+        (x2, y2) = round(xy2[0]), round(xy2[1])
+        output[y2, x2] = val
+
+    return crop(output)
+
+
+def crop(image: np.ndarray):
+    y_nonzero, x_nonzero = np.nonzero(image)
+    return image[np.min(y_nonzero):np.max(y_nonzero), np.min(x_nonzero):np.max(x_nonzero)]
