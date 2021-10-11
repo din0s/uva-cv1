@@ -45,12 +45,12 @@ if __name__ == "__main__":
     kps, val = match_keypoints(img1, img2)
 
     plt.title("All valid matches")
-    match = cv2.drawMatches(img1, kps[0], img2, kps[1], val, outImg=None)
+    match = cv2.drawMatches(img1, kps[0], img2, kps[1], val, outImg=None, flags=2)
     imshow(match)
 
     np.random.seed(42)
     ind = np.random.choice(len(val), size=10, replace=False)
 
     plt.title("10 random samples")
-    match_10 = cv2.drawMatches(img1, kps[0], img2, kps[1], val[ind], outImg=None)
+    match_10 = cv2.drawMatches(img1, kps[0], img2, kps[1], val[ind], outImg=None, flags=2)
     imshow(match_10)

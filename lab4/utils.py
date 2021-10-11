@@ -8,21 +8,50 @@ def imread_gray(file: str) -> np.ndarray:
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 
-def imshow(*imgs: np.ndarray, ax_titles: list = (), cmap: str = 'gray'):
+def imread_rgb(file: str) -> np.ndarray:
+    img = cv2.imread(file)
+    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+
+def imshow(*imgs: np.ndarray, ax_titles: list = ()):
     n, t = len(imgs), len(ax_titles)
     if n == 1:
-        plt.imshow(imgs[0], cmap)
+        plt.imshow(imgs[0], cmap='gray')
+        plt.axis('off')
     else:
         _, axs = plt.subplots(1, n, figsize=(5*n, 5))
         for i, img in enumerate(imgs):
-            axs[i].imshow(img, cmap)
+            axs[i].imshow(img, cmap='gray')
+            axs[i].set_axis_off()
 
             if i < t:
                 axs[i].set_title(ax_titles[i])
 
     plt.tight_layout()
     plt.show()
-    plt.clf()
+
+
+def imshow_grid(*imgs: np.ndarray, shape: tuple = None, ax_titles: list = ()):
+    n, t = len(imgs), len(ax_titles)
+    if n == 1:
+        plt.imshow(imgs[0], cmap='gray')
+        plt.axis('off')
+    else:
+        if shape is None:
+            shape = (1, n)
+        size = tuple(np.dot(shape[::-1], 5))
+        _, axs = plt.subplots(*shape, figsize=size)
+        for i, row in enumerate(list(axs)):
+            for j, ax in enumerate(row):
+                index = i*len(axs) + j
+                ax.imshow(imgs[index], cmap='gray')
+                ax.set_axis_off()
+
+                if index < t:
+                    ax.set_title(ax_titles[index])
+
+    plt.tight_layout()
+    plt.show()
 
 
 def create_affine_matrix(m: np.ndarray, t: np.ndarray) -> np.ndarray:
@@ -38,37 +67,68 @@ def create_affine_matrix(m: np.ndarray, t: np.ndarray) -> np.ndarray:
     return T @ R
 
 
+def nn_interp(image: np.ndarray, mask: list, invalid_val: int = -1) -> np.ndarray:
+    if invalid_val != 0:
+        image -= invalid_val
+
+    A, B, D = mask
+    # How to check if point is inside rectangle
+    # https://math.stackexchange.com/a/190373
+    AB = np.array([B[0] - A[0], B[1] - A[1]])
+    AD = np.array([D[0] - A[0], D[1] - A[1]])
+
+    r, c = np.nonzero(image)
+    for (yi, xi) in np.ndindex(image.shape[:2]):
+        if image[yi, xi] == 0:
+            AM = np.array([xi - A[0], yi - A[1]])
+            ABM = AB @ AM
+            ABB = AB @ AB
+            ADM = AD @ AM
+            ADD = AD @ AD
+
+            if ABM > 0 and ABM < ABB and ADM > 0 and ADM < ADD:
+                nn = ((r - yi)**2 + (c - xi)**2).argmin()
+                image[yi, xi] = image[r[nn], c[nn]]
+
+    if invalid_val != 0:
+        image += invalid_val
+    
+    image[image == invalid_val] = 0
+    return image
+
 def affine_wrap(img: np.ndarray, A: np.ndarray) -> np.ndarray:
-    h, w = img.shape
-    img_aff = np.zeros_like(img)
-    for (y1, x1), val in np.ndenumerate(img):
+    if img.ndim == 2:
+        img = img[:, :, np.newaxis]
+
+    h, w, d = img.shape
+    img_aff = np.full_like(img, -1, dtype=int)
+
+    for (y1, x1) in np.ndindex(img.shape[:2]):
         xy1 = np.array([x1, y1, 1]).T[:, np.newaxis]
         xy2 = A @ xy1
 
         xy2 = xy2.flatten()
         (x2, y2) = round(xy2[0]), round(xy2[1])
         if x2 >= 0 and x2 < w and y2 >= 0 and y2 < h:
-            img_aff[y2, x2] = val
+            img_aff[y2, x2, :] = img[y1, x1, :]
+    
+    mask = []
+    for (y,x) in ((0,0), (0,w-1), (h-1,0)):
+        xy1 = np.array([x, y, 1]).T[:, np.newaxis]
+        xy2 = (A @ xy1).flatten()
+
+        (x2, y2) = round(xy2[0]), round(xy2[1])
+        mask.append((x2,y2))
+
+    for c in range(d):
+        img_aff[..., c] = nn_interp(img_aff[..., c], mask)
 
     return img_aff
 
 
-def stitching(left_img: np.ndarray, right_img: np.ndarray,  A: np.ndarray) -> np.ndarray:
-    h, w = left_img.shape
-    output = np.zeros([2*h + w, 2*w + h])  # Make sure that the 2 images will fit in output. We will later crop it.
-    output[:h, :w] = left_img
-
-    for (y1, x1), val in np.ndenumerate(right_img):
-        xy1 = np.array([x1, y1, 1]).T[:, np.newaxis]
-        xy2 = A @ xy1
-
-        xy2 = xy2.flatten()
-        (x2, y2) = round(xy2[0]), round(xy2[1])
-        output[y2, x2] = val
-
-    return crop(output)
-
-
-def crop(image: np.ndarray):
-    y_nonzero, x_nonzero = np.nonzero(image)
+def crop_nonzero(image: np.ndarray) -> np.ndarray:
+    i = image
+    if image.ndim == 3:
+        i = np.mean(image, axis=2)
+    y_nonzero, x_nonzero = np.nonzero(i)
     return image[np.min(y_nonzero):np.max(y_nonzero), np.min(x_nonzero):np.max(x_nonzero)]

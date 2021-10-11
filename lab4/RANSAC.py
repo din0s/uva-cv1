@@ -1,5 +1,5 @@
 from keypoint_matching import match_keypoints
-from utils import affine_wrap, create_affine_matrix, imread_gray, imshow
+from utils import affine_wrap, create_affine_matrix, imread_gray, imshow, imshow_grid
 
 import cv2
 import numpy as np
@@ -52,7 +52,7 @@ def ransac(*imgs: np.ndarray, N: int = 50, P: int = 10, radius: float = 10.0, pl
             t_best = t
 
         if plot:
-            comp = cv2.drawMatches(imgs[0], kps[0], imgs[1], kps[1], sample, outImg=None)
+            comp = cv2.drawMatches(imgs[0], kps[0], imgs[1], kps[1], sample, outImg=None, flags=2)
             imshow(comp)
 
     # most_inline needs to be at least 3 (3 transformation matches)!
@@ -66,9 +66,11 @@ if __name__ == "__main__":
     m, t, most_in = ransac(img1, img2)
     A = create_affine_matrix(m, t)
 
+    h, w = img2.shape[:2]
     img2_aff = affine_wrap(img1, A)
-    img2_cv2 = cv2.warpAffine(img1, A[:-1, :], img2.shape[::-1])
+    img2_cv2 = cv2.warpAffine(img1, A[:-1, :], (w,h))
 
-    imshow(img1, img2_aff, img2_cv2, img2, \
-         ax_titles=("Original image", "Our implementation", "OpenCV warpAffine", "Ground truth") \
+    imshow_grid(img1, img2, img2_aff, img2_cv2, \
+         shape=(2,2), \
+         ax_titles=("Original image", "Ground truth", "Our implementation", "OpenCV warpAffine") \
         )
