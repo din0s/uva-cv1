@@ -7,6 +7,9 @@ import numpy as np
 
 def stitching(left_img: np.ndarray, right_img: np.ndarray,  A: np.ndarray) -> np.ndarray:
     d = 3 if left_img.ndim == 3 else 1
+    if d == 1:
+        left_img = left_img[:, :, np.newaxis]
+        right_img = right_img[:, :, np.newaxis]
 
     # Make sure that both images will fit in the output.
     # We will crop the final result later.
