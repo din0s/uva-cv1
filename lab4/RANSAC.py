@@ -7,6 +7,7 @@ import numpy as np
 
 def ransac(*imgs: np.ndarray, N: int = 50, P: int = 10, radius: float = 10.0, plot: bool = False) -> tuple:
     kps, valid = match_keypoints(*imgs)
+    print(f"Found {len(valid)} keypoint pairs")
 
     most_inline = -1
     m_best, t_best = None, None
