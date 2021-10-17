@@ -152,7 +152,21 @@ def keep_relevant_images(images, labels, relevant_labels):
     used_labels = labels[mask]
     used_images = images[mask, :, :, :]
     return used_images, used_labels
-    
+
+def get_dataset(train_set=True):
+    if train_set:
+        DATA_PATH = './data/stl10_binary/train_X.bin'
+        LABEL_PATH = './data/stl10_binary/train_y.bin'
+    else:
+        DATA_PATH = './data/stl10_binary/test_X.bin'
+        LABEL_PATH = './data/stl10_binary/test_y.bin'
+
+    relevant_classes = np.array([1, 2, 9, 7, 3])
+    images = read_all_images(DATA_PATH)
+    labels = read_labels(LABEL_PATH)
+    labels, images = keep_relevant_images(images, labels, relevant_classes)
+    return images, labels
+
 if __name__ == "__main__":
     # download data if needed
     # download_and_extract()
