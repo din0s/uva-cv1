@@ -17,7 +17,7 @@ try:
 except:
     from scipy.misc import imsave
 
-print(sys.version_info) 
+# print(sys.version_info) 
 
 # image shape
 HEIGHT = 96
@@ -164,7 +164,7 @@ def get_dataset(train_set=True):
     relevant_classes = np.array([1, 2, 9, 7, 3])
     images = read_all_images(DATA_PATH)
     labels = read_labels(LABEL_PATH)
-    labels, images = keep_relevant_images(images, labels, relevant_classes)
+    images, labels = keep_relevant_images(images, labels, relevant_classes)
     return images, labels
 
 if __name__ == "__main__":
