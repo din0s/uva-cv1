@@ -3,14 +3,15 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.metrics import classification_report
-from sklearn.svm import LinearSVC
-from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
 from stl10_input import get_dataset
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pickle
 
 
 SIFT = cv2.SIFT_create()
@@ -128,17 +129,13 @@ def freq_representation(X: np.ndarray, Y: np.ndarray, vocab_km: KMeans):
     
     for c_ind, label in enumerate(Y_unique):
         X_curr = X[Y == label]
-        
-        # accumulate counts for each cluster/bin
-        cluster_counts = np.array([0] * cluster_count)
-        for img_clusters in match_clusters(X_curr, vocab_km):
-            labels, counts = np.unique(img_clusters, return_counts=True)
-            for i, lbl in enumerate(labels):
-                cluster_counts[lbl] += counts[i]
 
-        cluster_counts = 100 * cluster_counts / np.sum(cluster_counts)
+        class_counts = get_descriptor_counts(X_curr, vocab_km, normalize=False)
+        class_counts = np.sum(class_counts, axis=0)
+        class_counts /= np.sum(class_counts) / 100
+        
         axs[c_ind].yaxis.set_major_formatter(PercentFormatter())
-        axs[c_ind].bar(cluster_labels, cluster_counts)
+        axs[c_ind].bar(cluster_labels, class_counts)
         axs[c_ind].set_xticks([])
         axs[c_ind].set_title(r"$\bf{Class-}$" + CLASS_NAMES[c_ind])
     
@@ -146,32 +143,37 @@ def freq_representation(X: np.ndarray, Y: np.ndarray, vocab_km: KMeans):
     for i in range(class_count, len(axs)):
         axs[i].set_axis_off()
     
+    # TODO: add labels?
     plt.tight_layout()
     plt.show()
 
 
-def get_descriptor_counts(X: np.ndarray, vocab_km: KMeans) -> list:
-    cluster_count = len(vocab_km.cluster_centers_)
-
+def get_descriptor_counts(X: np.ndarray, vocab_km: KMeans, normalize: bool = True) -> list:
     desc_counts = []
+
+    # accumulate counts for each cluster/bin
     for img_clusters in match_clusters(X, vocab_km):
-        img_list = np.array([0] * cluster_count)
+        cluster_counts = np.array([0.] * len(vocab_km.cluster_centers_))
         labels, counts = np.unique(img_clusters, return_counts=True)
         for i, lbl in enumerate(labels):
-            img_list[lbl] += counts[i]
-    
-        desc_counts.append(img_list)
+            cluster_counts[lbl] += counts[i]
 
+        # normalize
+        if normalize and np.sum(cluster_counts) != 0:
+            cluster_counts /= np.sum(cluster_counts) / 100
+        
+        desc_counts.append(cluster_counts)
+    
     return desc_counts
 
 
-def build_svm(X: np.ndarray, Y: np.ndarray, vocab_km: KMeans) -> LinearSVC:
+def build_svm(X: np.ndarray, Y: np.ndarray, vocab_km: KMeans) -> SVC:
     print("Training SVM classifier")
-    X_train = get_descriptor_counts(X, vocab_km)    
-    return LinearSVC(random_state=42, max_iter=2000).fit(X_train, Y)
+    X_train = get_descriptor_counts(X, vocab_km)
+    return SVC(random_state=42).fit(X_train, Y)
 
 
-def evaluate_svm(svm: LinearSVC, x: np.ndarray, y: np.ndarray):
+def evaluate_svm(svm: SVC, x: np.ndarray, y: np.ndarray):
     print("Evaluating classifier")
     x_desc = get_descriptor_counts(x, vocab_km)
 
@@ -181,21 +183,27 @@ def evaluate_svm(svm: LinearSVC, x: np.ndarray, y: np.ndarray):
     avg_precisions = []
     y_pred_conf = svm.decision_function(x_desc)
     for class_ind, class_label in enumerate(np.unique(y)):
+        print(f"Evaluating class {class_label} ({CLASS_NAMES[class_ind]})")
         class_conf = y_pred_conf[:, class_ind]
+        pred_sort = np.argsort(class_conf)[::-1]
 
-        ### This is wrong(?): ###
-        # avg_precision = 0
-        # correct_pred = 0
-        # for i, pred in enumerate(y_pred):
-        #     if y[i] == pred and pred == class_label:
-        #         correct_pred += 1
-        #         avg_precision += correct_pred / (i + 1)
-        # avg_precisions.append(avg_precision / len(y[y == class_label]))
-        # print(f"Average precision for class '{CLASS_NAMES[class_ind]}': %.2f" % np.mean(avg_precisions))
+        avg_precision = 0
+        correct_pred = 0
+        for i, pred_ind in enumerate(pred_sort):
+            true_class = y[pred_ind]
+            prediction = y_pred[pred_ind]
+            if true_class == prediction and prediction == class_label:
+                correct_pred += 1
+                avg_precision += correct_pred / (i + 1)
+        
+        total_in_class = len(y[y == class_label])
+        avg_precision /= total_in_class
+        avg_precisions.append(avg_precision)
+        print(f"Average precision: %.2f" % avg_precision)
+        print()
 
-        pred_sort = np.argsort(class_conf)
-        top5_ind = pred_sort[-5::-1]
-        bot5_ind = pred_sort[:5]
+        top5_ind = pred_sort[:5]
+        bot5_ind = pred_sort[-5::-1]
 
         _, axs = plt.subplots(2, 5, figsize=(25, 10))
         plt.suptitle(r"$\bf{Classifier-}$" + CLASS_NAMES[class_ind], fontsize='x-large')
@@ -215,6 +223,8 @@ def evaluate_svm(svm: LinearSVC, x: np.ndarray, y: np.ndarray):
         
         plt.tight_layout()
         plt.show()
+    
+    print("mAP: %.2f" % np.mean(avg_precisions))
 
 
 if __name__ == "__main__":
@@ -222,23 +232,34 @@ if __name__ == "__main__":
     X_train, Y_train = get_dataset(train_set=True)
     x_test, y_test = get_dataset(train_set=False)
 
-    sample_feature_extraction(X_train, Y_train, show=True)
+    # sample_feature_extraction(X_train, Y_train, show=True)
 
     subset_size = 0.5
-    n_clusters = 500
 
     assert subset_size <= 0.5
-    X_shuffle, Y_shuffle = shuffle(X_train, Y_train, random_state=42)
-    # X_shuffle, Y_shuffle = shuffle(X_train[:100], Y_train[:100], random_state=42)
-    build_ind = int(np.floor(len(X_shuffle) * subset_size))
-    X_build, X_calc = X_shuffle[:build_ind], X_shuffle[build_ind:]
-    Y_build, Y_calc = Y_shuffle[:build_ind], Y_shuffle[build_ind:]
+    X_build, X_calc, Y_build, Y_calc = \
+        train_test_split(X_train, Y_train, train_size=subset_size, random_state=42, stratify=Y_train)
 
-    vocab_km = build_visual_vocabulary(X_build, n_clusters)
-    visualize_words(vocab_km.cluster_centers_)
+    for n_clusters in (500, 1000, 2000):
 
-    freq_representation(X_calc, Y_calc, vocab_km)
+        ###
+        vocab_km = build_visual_vocabulary(X_build, n_clusters)
+        with open(f"km{n_clusters}.pkl", "wb") as f:
+            print("Saving KMeans model")
+            pickle.dump(vocab_km, f)
+        
+        ########
+        ## OR ##
+        ########
 
-    svm = build_svm(X_calc, Y_calc, vocab_km)
-    evaluate_svm(svm, x_test, y_test)
-    # evaluate_svm(svm, x_test[:100], y_test[:100])
+        # with open(f"km{n_clusters}.pkl", "rb") as f:
+        #     print("Loading KMeans model")
+        #     vocab_km = pickle.load(f)
+        ###
+
+        visualize_words(vocab_km.cluster_centers_)
+        freq_representation(X_calc, Y_calc, vocab_km)
+
+        svm = build_svm(X_calc, Y_calc, vocab_km)
+        evaluate_svm(svm, x_test, y_test)
+        # evaluate_svm(svm, x_test[:100], y_test[:100])
