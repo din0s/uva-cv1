@@ -1,6 +1,7 @@
 from matplotlib.ticker import PercentFormatter
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from skimage.feature import hog
 from sklearn.manifold import TSNE
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
@@ -23,14 +24,21 @@ CLASS_MAP = {
     3: "ship"
 }
 CLASS_NAMES = list(CLASS_MAP.values())
+USE_HOG = True
 
 
-def detect_kps(img: np.ndarray) -> list:
+def detect_kps_sift(img: np.ndarray) -> list:
     return SIFT.detect(img)
 
 
-def detect_kps_descs(img: np.ndarray) -> tuple:
-    return SIFT.detectAndCompute(img, None)
+def get_descs(img: np.ndarray) -> tuple:
+    if USE_HOG:
+        descs = hog(img, orientations=8, pixels_per_cell=(16, 16),
+                    cells_per_block=(1, 1), feature_vector=False,
+                    multichannel=(img.ndim == 3)).reshape(-1,8)
+        return descs
+    else:
+        return SIFT.detectAndCompute(img, None)[1]
 
 
 def sample_feature_extraction(X: np.ndarray, Y: np.ndarray, show: bool = False):
@@ -44,13 +52,13 @@ def sample_feature_extraction(X: np.ndarray, Y: np.ndarray, show: bool = False):
             img = X[np.random.choice(curr_class)]
 
             # detect and plot keypoints
-            kps = detect_kps(img)
+            kps = detect_kps_sift(img)
             x = [kp.pt[0] for kp in kps]
             y = [kp.pt[1] for kp in kps]
             s = [kp.size for kp in kps]
             s /= np.min(s) * 0.1
             axs[i_ind].scatter(x, y, facecolors='none', edgecolors='r', s=s)
-            
+
             # show image
             axs[i_ind].imshow(img)
             axs[i_ind].set_axis_off()
@@ -62,7 +70,7 @@ def sample_feature_extraction(X: np.ndarray, Y: np.ndarray, show: bool = False):
             plt.show()
         else:
             plt.savefig(f"./img/{CLASS_NAMES[c_ind]}")
-    
+
     plt.close('all')
 
 
@@ -71,10 +79,10 @@ def build_visual_vocabulary(X: np.ndarray, n_clusters: int) -> KMeans:
     print("[1/2] Extracting descriptors")
     descriptors = []
     for img in X:
-        _, descs = detect_kps_descs(img)
+        descs = get_descs(img)
         if descs is not None:
             descriptors.extend(descs)
-    
+
     print("[2/2] Clustering descriptors")
     return KMeans(n_clusters=n_clusters, random_state=42).fit(descriptors)
 
@@ -82,7 +90,7 @@ def build_visual_vocabulary(X: np.ndarray, n_clusters: int) -> KMeans:
 def match_clusters(X: np.ndarray, km: KMeans) -> list:
     clusters = []
     for img in X:
-        _, descs = detect_kps_descs(img)
+        descs = get_descs(img)
         if descs is not None:
             descs = np.array(descs, dtype=float)
             clusters.append(km.predict(descs))
@@ -126,23 +134,23 @@ def freq_representation(X: np.ndarray, Y: np.ndarray, vocab_km: KMeans):
     ncols = 2
     _, axs = plt.subplots(nrows, ncols, figsize=(5*nrows, 5*ncols), sharex=True, sharey=True)
     axs = axs.flatten()
-    
+
     for c_ind, label in enumerate(Y_unique):
         X_curr = X[Y == label]
 
         class_counts = get_descriptor_counts(X_curr, vocab_km, normalize=False)
         class_counts = np.sum(class_counts, axis=0)
         class_counts /= np.sum(class_counts) / 100
-        
+
         axs[c_ind].yaxis.set_major_formatter(PercentFormatter())
         axs[c_ind].bar(cluster_labels, class_counts)
         axs[c_ind].set_xticks([])
         axs[c_ind].set_title(r"$\bf{Class-}$" + CLASS_NAMES[c_ind])
-    
+
     # hide axes for remaining subplots
     for i in range(class_count, len(axs)):
         axs[i].set_axis_off()
-    
+
     # TODO: add labels?
     plt.tight_layout()
     plt.show()
@@ -161,9 +169,9 @@ def get_descriptor_counts(X: np.ndarray, vocab_km: KMeans, normalize: bool = Tru
         # normalize
         if normalize and np.sum(cluster_counts) != 0:
             cluster_counts /= np.sum(cluster_counts) / 100
-        
+
         desc_counts.append(cluster_counts)
-    
+
     return desc_counts
 
 
@@ -195,7 +203,7 @@ def evaluate_svm(svm: SVC, x: np.ndarray, y: np.ndarray):
             if true_class == prediction and prediction == class_label:
                 correct_pred += 1
                 avg_precision += correct_pred / (i + 1)
-        
+
         total_in_class = len(y[y == class_label])
         avg_precision /= total_in_class
         avg_precisions.append(avg_precision)
@@ -206,24 +214,24 @@ def evaluate_svm(svm: SVC, x: np.ndarray, y: np.ndarray):
         bot5_ind = pred_sort[-5::-1]
 
         _, axs = plt.subplots(2, 5, figsize=(25, 10))
-        plt.suptitle(r"$\bf{Classifier-}$" + CLASS_NAMES[class_ind], fontsize='x-large')
+        plt.suptitle(r"$\bf{Classifier-}$" + CLASS_NAMES[class_ind], fontsize=32)
         for i, ax in enumerate(axs[0]):
             if i == 2:
-                ax.set_title("Top 5 results")
-            
+                ax.set_title("Top 5 results", fontdict={'fontsize': 24})
+
             ax.set_axis_off()
             ax.imshow(x[top5_ind[i]])
-        
+
         for i, ax in enumerate(axs[1]):
             if i == 2:
-                ax.set_title("Worst 5 results")
-            
+                ax.set_title("Worst 5 results", fontdict={'fontsize': 24})
+
             ax.set_axis_off()
             ax.imshow(x[bot5_ind[i]])
-        
+
         plt.tight_layout()
         plt.show()
-    
+
     print("mAP: %.2f" % np.mean(avg_precisions))
 
 
@@ -241,25 +249,25 @@ if __name__ == "__main__":
         train_test_split(X_train, Y_train, train_size=subset_size, random_state=42, stratify=Y_train)
 
     for n_clusters in (500, 1000, 2000):
+        pickle_ext = "_hog" if USE_HOG else ""
 
         ###
         vocab_km = build_visual_vocabulary(X_build, n_clusters)
-        with open(f"km{n_clusters}.pkl", "wb") as f:
+        with open(f"km{n_clusters}{pickle_ext}.pkl", "wb") as f:
             print("Saving KMeans model")
             pickle.dump(vocab_km, f)
-        
+
         ########
         ## OR ##
         ########
 
-        # with open(f"km{n_clusters}.pkl", "rb") as f:
+        # with open(f"km{n_clusters}{pickle_ext}.pkl", "rb") as f:
         #     print("Loading KMeans model")
         #     vocab_km = pickle.load(f)
         ###
 
-        visualize_words(vocab_km.cluster_centers_)
-        freq_representation(X_calc, Y_calc, vocab_km)
+        # visualize_words(vocab_km.cluster_centers_)
+        # freq_representation(X_calc, Y_calc, vocab_km)
 
         svm = build_svm(X_calc, Y_calc, vocab_km)
         evaluate_svm(svm, x_test, y_test)
-        # evaluate_svm(svm, x_test[:100], y_test[:100])
