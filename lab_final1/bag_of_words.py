@@ -24,7 +24,7 @@ CLASS_MAP = {
     3: "ship"
 }
 CLASS_NAMES = list(CLASS_MAP.values())
-USE_HOG = True
+USE_HOG = False
 
 
 def detect_kps_sift(img: np.ndarray) -> list:
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     X_train, Y_train = get_dataset(train_set=True)
     x_test, y_test = get_dataset(train_set=False)
 
-    # sample_feature_extraction(X_train, Y_train, show=True)
+    sample_feature_extraction(X_train, Y_train, show=True)
 
     subset_size = 0.5
 
@@ -253,9 +253,9 @@ if __name__ == "__main__":
 
         ###
         vocab_km = build_visual_vocabulary(X_build, n_clusters)
-        with open(f"km{n_clusters}{pickle_ext}.pkl", "wb") as f:
-            print("Saving KMeans model")
-            pickle.dump(vocab_km, f)
+        # with open(f"km{n_clusters}{pickle_ext}.pkl", "wb") as f:
+        #     print("Saving KMeans model")
+        #     pickle.dump(vocab_km, f)
 
         ########
         ## OR ##
@@ -266,8 +266,8 @@ if __name__ == "__main__":
         #     vocab_km = pickle.load(f)
         ###
 
-        # visualize_words(vocab_km.cluster_centers_)
-        # freq_representation(X_calc, Y_calc, vocab_km)
+        visualize_words(vocab_km.cluster_centers_)
+        freq_representation(X_calc, Y_calc, vocab_km)
 
         svm = build_svm(X_calc, Y_calc, vocab_km)
         evaluate_svm(svm, x_test, y_test)
